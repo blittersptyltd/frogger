@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="Cache-Control" content="no-store">
+    <title>Frogger Arcade Clone</title>
+    <link rel="stylesheet" href="src/styles.css?v=20260510-attract-credits">
+  </head>
+  <body>
+    <main class="shell">
+      <canvas id="game" width="240" height="256" aria-label="Frogger arcade clone game canvas"></canvas>
+      <div class="panel">
+        <button id="coin" type="button">Coin</button>
+        <button id="start" type="button">Start</button>
+        <button id="mute" type="button" aria-pressed="false">Sound</button>
+      </div>
+      <div class="dpad" aria-label="Movement controls">
+        <button type="button" data-dir="up" aria-label="Move up">^</button>
+        <button type="button" data-dir="left" aria-label="Move left">&lt;</button>
+        <button type="button" data-dir="down" aria-label="Move down">v</button>
+        <button type="button" data-dir="right" aria-label="Move right">&gt;</button>
+      </div>
+    </main>
+    <script>
+      window.addEventListener("error", (event) => {
+        const canvas = document.querySelector("#game");
+        if (!canvas) return;
+        const ctx = canvas.getContext("2d");
+        ctx.fillStyle = "#000";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = "#f33";
+        ctx.font = "8px monospace";
+        ctx.fillText("Runtime error", 8, 118);
+        ctx.fillText(String(event.error?.message || event.message || "unknown").slice(0, 36), 8, 130);
+      });
+    </script>
+    <script type="module" src="src/app.js?v=20260510-attract-credits"></script>
+  </body>
+</html>

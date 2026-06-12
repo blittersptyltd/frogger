@@ -1,0 +1,126 @@
+:root {
+  color-scheme: dark;
+  --cabinet: #111;
+  --rim: #34343a;
+  --green: #28e05d;
+  --text: #f4f4f4;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  min-width: 0;
+  display: grid;
+  place-items: center;
+  overflow-x: hidden;
+  background:
+    radial-gradient(circle at center, #2a2a31 0 1px, transparent 1px) 0 0 / 18px 18px,
+    #08080a;
+  color: var(--text);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+.shell {
+  width: min-content;
+  max-width: calc(100vw - 16px);
+  display: grid;
+  gap: 14px;
+  justify-items: center;
+  padding: 18px;
+  background: var(--cabinet);
+  border: 3px solid var(--rim);
+  box-shadow: 0 16px 50px rgba(0, 0, 0, 0.65);
+}
+
+canvas {
+  width: min(720px, calc(100vw - 58px));
+  aspect-ratio: 240 / 256;
+  height: auto;
+  background: #000;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  border: 2px solid #050505;
+}
+
+.panel,
+.dpad {
+  width: min(720px, calc(100vw - 58px));
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+button {
+  min-width: 88px;
+  border: 1px solid #606068;
+  background: #18181d;
+  color: var(--text);
+  font: inherit;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+button:focus-visible {
+  outline: 2px solid var(--green);
+  outline-offset: 2px;
+}
+
+button:hover {
+  border-color: var(--green);
+}
+
+.dpad {
+  width: 148px;
+  display: grid;
+  grid-template-columns: repeat(3, 44px);
+  grid-template-rows: repeat(3, 38px);
+  gap: 4px;
+}
+
+.dpad button {
+  min-width: 0;
+  width: 44px;
+  height: 38px;
+  padding: 0;
+  line-height: 1;
+}
+
+.dpad [data-dir="up"] {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.dpad [data-dir="left"] {
+  grid-column: 1;
+  grid-row: 2;
+}
+
+.dpad [data-dir="down"] {
+  grid-column: 2;
+  grid-row: 2;
+}
+
+.dpad [data-dir="right"] {
+  grid-column: 3;
+  grid-row: 2;
+}
+
+@media (max-height: 620px) {
+  .shell {
+    padding: 10px;
+    gap: 8px;
+  }
+
+  canvas,
+  .panel {
+    width: min(720px, calc(100vw - 42px));
+  }
+}
