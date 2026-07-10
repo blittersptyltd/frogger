@@ -1,7 +1,7 @@
 import { ATTRACT_DEMO_RESET_TICKS, BONUS_FLY_DURATION, BONUS_FLY_SCORE, CROCODILE_DURATION, DEMO_MOVES, DIRS, GAME_OVER_TICKS, HEIGHT, HOMES, HOME_TOLERANCE, HOME_Y, LEVEL_CLEAR_TICKS, LEVEL_CLEAR_TIME_BONUS_DIVISOR, PASSENGER_SCORE, READY_TICKS, START_X, START_Y, TILE, WIDTH, bonusFlySpawnTicks, crocodileSpawnTicks, levelSpeed, levelTimeMax, passengerSpawnTicks, snakeCount } from "./constants.js?v=20260510-attract-credits";
 import { riverat, riverObjects, roadObjects } from "./lanes.js?v=20260510-attract-credits";
 
-export function createGame() {
+export function createGame({ motionScale = 1 } = {}) {
   return {
     mode: "attract",
     credits: 0,
@@ -10,6 +10,7 @@ export function createGame() {
     lives: 4,
     level: 1,
     t: 0,
+    motionScale: normalizeMotionScale(motionScale),
     attractTicks: 0,
     demoMoveIndex: 0,
     gameOverTicks: 0,
@@ -173,10 +174,10 @@ function updatePlayingFrame(state, { demo }) {
 }
 
 export function getFrameData(state) {
-  const laneTime = state.t * levelSpeed(state.level);
+  const pacedLaneTime = laneTime(state);
   return {
-    road: roadObjects(laneTime, state.level),
-    river: riverObjects(laneTime, state.level),
+    road: roadObjects(pacedLaneTime, state.level),
+    river: riverObjects(pacedLaneTime, state.level),
     passengers: state.passenger.active ? passengerObjects(state) : [],
     snakes: snakeObjects(state)
   };
@@ -454,7 +455,7 @@ function normalizePassengerX(x) {
 function snakeObjects(state) {
   const width = 32;
   const speed = 0.75 + Math.min(0.5, (state.level - 1) * 0.04);
-  const base = WIDTH - ((state.t * speed) % (WIDTH + width));
+  const base = WIDTH - ((motionTime(state) * speed) % (WIDTH + width));
   const id = [73, 74, 75][Math.floor(state.t / 16) % 3];
   const laneOffsets = Array.from({ length: snakeCount(state.level) }, (_, index) => index * 88);
   return laneOffsets.flatMap((offset) => [-WIDTH, 0, WIDTH].map((shift) => ({
@@ -497,7 +498,15 @@ function startNextLevel(state) {
 }
 
 function laneTime(state, offset = 0) {
-  return (state.t + offset) * levelSpeed(state.level);
+  return motionTime(state, offset) * levelSpeed(state.level);
+}
+
+function motionTime(state, offset = 0) {
+  return (state.t + offset) * normalizeMotionScale(state.motionScale);
+}
+
+function normalizeMotionScale(value) {
+  return Number.isFinite(value) && value > 0 ? value : 1;
 }
 
 function startDeath(state) {

@@ -1,7 +1,8 @@
 import { CONTROL_MAP } from "./constants.js?v=20260510-attract-credits";
 import { createAudioController, playSoundEvent, setMuted, unlockAudio, updateMusic } from "./audio.js?v=20260710-mobile-unlock";
-import { createGame, getFrameData, insertCoin, requestMove, startGame, updateGame } from "./game.js?v=20260510-attract-credits";
+import { createGame, getFrameData, insertCoin, requestMove, startGame, updateGame } from "./game.js?v=20260710-mobile-pace";
 import { directionFromSwipe } from "./input.js?v=20260710-mobile";
+import { motionScaleForWindow } from "./pacing.js?v=20260710-mobile-pace";
 import { createRenderer, render } from "./renderer.js?v=20260510-attract-credits";
 import { loadSpriteSheet } from "./sprites.js?v=20260510-attract-credits";
 
@@ -12,7 +13,8 @@ const soundLabel = document.querySelector("#sound-label");
 const controlStatus = document.querySelector("#control-status");
 const gestureHint = document.querySelector("#swipe-hint");
 const audio = createAudioController();
-const state = createGame();
+const state = createGame({ motionScale: motionScaleForWindow(window) });
+document.documentElement.dataset.motionScale = String(state.motionScale);
 state.debugCollision = new URLSearchParams(window.location.search).has("collision");
 
 let renderer = null;

@@ -17,6 +17,7 @@ globalThis.localStorage = {
 
 const { createGame, getFrameData, insertCoin, requestMove, startGame, updateGame } = await import("../src/game.js");
 const { ATTRACT_DEMO_RESET_TICKS, BONUS_FLY_DURATION, BONUS_FLY_SCORE, CROCODILE_DURATION, CROCODILE_SPAWN_TICKS, GAME_OVER_TICKS, LEVEL_CLEAR_TICKS, LEVEL_CLEAR_TIME_BONUS_DIVISOR, PASSENGER_SCORE, PASSENGER_SPAWN_TICKS, READY_TICKS, TIME_MAX, bonusFlySpawnTicks, crocodileSpawnTicks, levelSpeed, levelTimeMax, passengerSpawnTicks, snakeCount } = await import("../src/constants.js");
+const { riverObjects, roadObjects } = await import("../src/lanes.js");
 
 function drainDeath(state) {
   for (let i = 0; i < 64; i += 1) updateGame(state);
@@ -31,9 +32,27 @@ test("game boots into attract mode with no credits", () => {
   const state = createGame();
 
   assert.equal(state.mode, "attract");
+  assert.equal(state.motionScale, 1);
   assert.equal(state.credits, 0);
   assert.equal(startGame(state), false);
   assert.equal(state.mode, "attract");
+});
+
+test("game normalizes invalid motion scales to classic speed", () => {
+  assert.equal(createGame({ motionScale: 0.75 }).motionScale, 0.75);
+  assert.equal(createGame({ motionScale: 0 }).motionScale, 1);
+  assert.equal(createGame({ motionScale: -1 }).motionScale, 1);
+  assert.equal(createGame({ motionScale: Number.NaN }).motionScale, 1);
+});
+
+test("mobile pacing uses the same scaled timeline for road and river objects", () => {
+  const state = createGame({ motionScale: 0.75 });
+  state.t = 80;
+
+  const frameData = getFrameData(state);
+
+  assert.deepEqual(frameData.road, roadObjects(60, 1));
+  assert.deepEqual(frameData.river, riverObjects(60, 1));
 });
 
 test("coin adds credit and start consumes one credit", () => {
@@ -216,6 +235,19 @@ test("frog rides supported river objects by the lane delta", () => {
 
   assert.equal(state.frog.dying, 0);
   assert.equal(state.frog.x, 91);
+});
+
+test("mobile river carry uses the reduced motion scale", () => {
+  const state = createGame({ motionScale: 0.75 });
+  startPaidGame(state);
+  state.readyTicks = 0;
+  state.frog.x = 90;
+  state.frog.y = 104;
+
+  updateGame(state);
+
+  assert.equal(state.frog.dying, 0);
+  assert.equal(state.frog.x, 90.75);
 });
 
 test("valid home landing fills a home and restarts the frog", () => {
@@ -475,6 +507,19 @@ test("snake moves right to left", () => {
   const x1 = getFrameData(state).snakes[0].x;
 
   assert.ok(x1 < x0);
+});
+
+test("mobile pacing reduces snake movement to 75 percent", () => {
+  const state = createGame({ motionScale: 0.75 });
+  state.level = 3;
+  state.t = 64;
+  const x0 = getFrameData(state).snakes[0].x;
+
+  state.t = 65;
+  const x1 = getFrameData(state).snakes[0].x;
+
+  const classicStep = 0.75 + (state.level - 1) * 0.04;
+  assert.ok(Math.abs((x0 - x1) - classicStep * 0.75) < 1e-9);
 });
 
 test("touching the snake kills the frog", () => {
