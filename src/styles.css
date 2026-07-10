@@ -1,96 +1,240 @@
 :root {
   color-scheme: dark;
-  --cabinet: #111;
-  --rim: #34343a;
-  --green: #28e05d;
-  --text: #f4f4f4;
+  --cabinet: #0d1510;
+  --cabinet-raised: #18221b;
+  --rim: #33463a;
+  --green: #38f56a;
+  --green-dark: #087b2a;
+  --amber: #ffd34d;
+  --text: #f4fff6;
+  --muted: #9bab9e;
+  --control-size: clamp(48px, 15vw, 60px);
 }
 
 * {
   box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
 }
 
 html,
 body {
+  width: 100%;
+  min-width: 0;
   height: 100%;
+  min-height: 100%;
+  overscroll-behavior: none;
 }
 
 body {
   margin: 0;
-  min-width: 0;
+  overflow: hidden;
   display: grid;
   place-items: center;
-  overflow-x: hidden;
   background:
-    radial-gradient(circle at center, #2a2a31 0 1px, transparent 1px) 0 0 / 18px 18px,
-    #08080a;
+    radial-gradient(circle at 50% 35%, rgba(44, 103, 55, 0.24), transparent 46%),
+    radial-gradient(circle at center, #203126 0 1px, transparent 1px) 0 0 / 18px 18px,
+    #050806;
   color: var(--text);
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 
+button,
+canvas {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
 .shell {
-  width: min-content;
-  max-width: calc(100vw - 16px);
+  width: 100%;
+  max-width: 480px;
+  height: 100dvh;
+  min-height: 100svh;
   display: grid;
-  gap: 14px;
+  grid-template-rows: auto auto;
+  gap: clamp(7px, 1.6vh, 12px);
+  align-content: center;
   justify-items: center;
-  padding: 18px;
-  background: var(--cabinet);
-  border: 3px solid var(--rim);
-  box-shadow: 0 16px 50px rgba(0, 0, 0, 0.65);
+  padding:
+    max(8px, env(safe-area-inset-top))
+    max(8px, env(safe-area-inset-right))
+    max(8px, env(safe-area-inset-bottom))
+    max(8px, env(safe-area-inset-left));
+  background: linear-gradient(145deg, rgba(20, 33, 24, 0.97), rgba(8, 13, 10, 0.98));
+  box-shadow: 0 20px 70px rgba(0, 0, 0, 0.72);
+}
+
+.game-stage {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  width: 100%;
+  display: grid;
+  place-items: center;
 }
 
 canvas {
-  width: min(720px, calc(100vw - 58px));
-  aspect-ratio: 240 / 256;
+  display: block;
+  width: min(100%, calc((100dvh - 230px) * 0.9375), 720px);
+  min-width: 0;
   height: auto;
+  max-height: 100%;
+  aspect-ratio: 240 / 256;
   background: #000;
   image-rendering: pixelated;
   image-rendering: crisp-edges;
-  border: 2px solid #050505;
+  border: 2px solid #020403;
+  border-radius: 3px;
+  box-shadow:
+    0 0 0 1px #36453a,
+    0 12px 32px rgba(0, 0, 0, 0.52),
+    0 0 32px rgba(29, 205, 73, 0.07);
+  touch-action: none;
+  cursor: grab;
 }
 
-.panel,
-.dpad {
-  width: min(720px, calc(100vw - 58px));
-  display: flex;
-  justify-content: center;
-  gap: 10px;
+canvas:active {
+  cursor: grabbing;
+}
+
+canvas:focus-visible {
+  outline: 3px solid var(--green);
+  outline-offset: 3px;
+}
+
+.gesture-hint {
+  position: absolute;
+  left: 50%;
+  bottom: 30px;
+  z-index: 2;
+  margin: 0;
+  padding: 5px 9px;
+  transform: translateX(-50%);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.76);
+  color: #fff;
+  font-size: 10px;
+  line-height: 1;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  pointer-events: none;
+  animation: hint-away 4.5s 1.5s both;
+}
+
+.gesture-hint.is-hidden {
+  display: none;
+}
+
+.controls {
+  width: 100%;
+  display: grid;
+  justify-items: center;
+  gap: clamp(7px, 1.4vh, 11px);
+}
+
+.panel {
+  width: min(100%, 320px);
+  display: grid;
+  grid-template-columns: minmax(0, 1.65fr) minmax(92px, 1fr);
+  gap: 8px;
 }
 
 button {
-  min-width: 88px;
-  border: 1px solid #606068;
-  background: #18181d;
+  min-width: 48px;
+  min-height: 48px;
+  border: 1px solid #5d7062;
+  border-radius: 11px;
+  background: linear-gradient(#263129, #151c17);
   color: var(--text);
   font: inherit;
-  padding: 8px 12px;
   cursor: pointer;
+  touch-action: manipulation;
+  box-shadow:
+    inset 0 1px rgba(255, 255, 255, 0.09),
+    0 4px 0 #050806,
+    0 7px 14px rgba(0, 0, 0, 0.34);
+  transition: transform 70ms ease, border-color 120ms ease, filter 120ms ease;
 }
 
 button:focus-visible {
-  outline: 2px solid var(--green);
-  outline-offset: 2px;
+  outline: 3px solid var(--green);
+  outline-offset: 3px;
 }
 
-button:hover {
-  border-color: var(--green);
+button:active,
+button.is-pressed {
+  transform: translateY(3px) scale(0.98);
+  box-shadow:
+    inset 0 1px rgba(255, 255, 255, 0.06),
+    0 1px 0 #050806,
+    0 3px 8px rgba(0, 0, 0, 0.35);
+}
+
+.action-button {
+  min-height: 52px;
+  display: grid;
+  place-content: center;
+  gap: 2px;
+  padding: 6px 14px;
+}
+
+.button-kicker {
+  color: var(--muted);
+  font-size: 9px;
+  line-height: 1;
+  letter-spacing: 0.13em;
+}
+
+.button-label {
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0.08em;
+}
+
+.play-button {
+  border-color: #29bd4f;
+  background: linear-gradient(#20a846, #0a6f2b);
+  color: #fff;
+}
+
+.play-button .button-kicker {
+  color: #c9ffd4;
+}
+
+.sound-button[aria-pressed="true"] {
+  border-color: #846f33;
+  color: #ffedaf;
 }
 
 .dpad {
-  width: 148px;
+  --gap: 5px;
+  position: relative;
+  width: calc(var(--control-size) * 3 + var(--gap) * 2);
   display: grid;
-  grid-template-columns: repeat(3, 44px);
-  grid-template-rows: repeat(3, 38px);
-  gap: 4px;
+  grid-template-columns: repeat(3, var(--control-size));
+  grid-template-rows: repeat(3, var(--control-size));
+  gap: var(--gap);
+  touch-action: none;
 }
 
 .dpad button {
-  min-width: 0;
-  width: 44px;
-  height: 38px;
+  position: relative;
+  z-index: 1;
+  width: var(--control-size);
+  height: var(--control-size);
   padding: 0;
+  display: grid;
+  place-items: center;
+  border-color: #607064;
+  border-radius: 13px;
+  font-size: clamp(17px, 5vw, 22px);
   line-height: 1;
+}
+
+.dpad button span {
+  filter: drop-shadow(0 1px 0 #000);
 }
 
 .dpad [data-dir="up"] {
@@ -103,9 +247,14 @@ button:hover {
   grid-row: 2;
 }
 
-.dpad [data-dir="down"] {
+.dpad-centre {
   grid-column: 2;
   grid-row: 2;
+  border-radius: 13px;
+  background:
+    radial-gradient(circle, rgba(56, 245, 106, 0.34) 0 3px, transparent 4px),
+    #101712;
+  box-shadow: inset 0 0 0 1px #27352b;
 }
 
 .dpad [data-dir="right"] {
@@ -113,14 +262,105 @@ button:hover {
   grid-row: 2;
 }
 
-@media (max-height: 620px) {
-  .shell {
-    padding: 10px;
-    gap: 8px;
+.dpad [data-dir="down"] {
+  grid-column: 2;
+  grid-row: 3;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@keyframes hint-away {
+  0%,
+  58% {
+    opacity: 1;
   }
 
-  canvas,
+  100% {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  button:hover {
+    border-color: var(--green);
+    filter: brightness(1.12);
+  }
+}
+
+@media (orientation: landscape) and (max-height: 600px) {
+  :root {
+    --control-size: clamp(48px, 14vh, 58px);
+  }
+
+  .shell {
+    max-width: none;
+    grid-template-columns: minmax(0, 1fr) minmax(184px, 36vw);
+    grid-template-rows: minmax(0, 1fr);
+    gap: clamp(9px, 2vw, 18px);
+    align-content: stretch;
+  }
+
+  .game-stage {
+    height: 100%;
+  }
+
+  canvas {
+    width: auto;
+    height: 100%;
+    max-width: 100%;
+  }
+
+  .controls {
+    align-content: center;
+  }
+
   .panel {
-    width: min(720px, calc(100vw - 42px));
+    width: min(100%, 230px);
+  }
+
+  .action-button {
+    padding-inline: 8px;
+  }
+
+  .gesture-hint {
+    bottom: 22px;
+  }
+}
+
+@media (min-width: 768px) and (min-height: 601px) {
+  .shell {
+    max-width: min(760px, calc(100vw - 32px));
+    min-height: min(100svh, 980px);
+    height: min(100dvh, 980px);
+    border-inline: 3px solid var(--rim);
+  }
+
+  .controls {
+    grid-template-columns: minmax(260px, 320px) auto;
+    justify-content: center;
+    align-items: center;
+    gap: 26px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }

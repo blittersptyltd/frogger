@@ -1,13 +1,16 @@
 import { CONTROL_MAP } from "./constants.js?v=20260510-attract-credits";
 import { createAudioController, playSoundEvent, setMuted, updateMusic } from "./audio.js?v=20260510-attract-credits";
 import { createGame, getFrameData, insertCoin, requestMove, startGame, updateGame } from "./game.js?v=20260510-attract-credits";
+import { directionFromSwipe } from "./input.js?v=20260710-mobile";
 import { createRenderer, render } from "./renderer.js?v=20260510-attract-credits";
 import { loadSpriteSheet } from "./sprites.js?v=20260510-attract-credits";
 
 const canvas = document.querySelector("#game");
-const startButton = document.querySelector("#start");
-const coinButton = document.querySelector("#coin");
+const playButton = document.querySelector("#play");
 const muteButton = document.querySelector("#mute");
+const soundLabel = document.querySelector("#sound-label");
+const controlStatus = document.querySelector("#control-status");
+const gestureHint = document.querySelector("#swipe-hint");
 const audio = createAudioController();
 const state = createGame();
 state.debugCollision = new URLSearchParams(window.location.search).has("collision");
@@ -33,15 +36,12 @@ loadSpriteSheet()
   });
 
 function wireControls() {
-  startButton.addEventListener("click", () => {
-    startGame(state);
-    updateMusic(audio, state);
-  });
-  coinButton.addEventListener("click", () => insertCoin(state));
+  playButton.addEventListener("click", beginPlay);
   muteButton.addEventListener("click", () => {
     setMuted(audio, !audio.muted);
-    muteButton.textContent = audio.muted ? "Muted" : "Sound";
+    soundLabel.textContent = audio.muted ? "OFF" : "ON";
     muteButton.setAttribute("aria-pressed", String(audio.muted));
+    controlStatus.textContent = audio.muted ? "Sound muted" : "Sound on";
   });
 
   window.addEventListener("keydown", (event) => {
@@ -58,25 +58,98 @@ function wireControls() {
     }
 
     if (event.code === "Enter" || event.code === "Space") {
-      startGame(state);
-      updateMusic(audio, state);
+      beginPlay();
       event.preventDefault();
       return;
     }
 
     const dir = CONTROL_MAP[event.code];
     if (dir) {
-      requestMove(state, dir);
+      move(dir);
       event.preventDefault();
     }
   });
 
   document.querySelectorAll("[data-dir]").forEach((button) => {
     button.addEventListener("pointerdown", (event) => {
-      requestMove(state, button.dataset.dir);
+      move(button.dataset.dir);
+      button.classList.add("is-pressed");
       event.preventDefault();
     });
+    button.addEventListener("pointerup", () => button.classList.remove("is-pressed"));
+    button.addEventListener("pointercancel", () => button.classList.remove("is-pressed"));
+    button.addEventListener("pointerleave", () => button.classList.remove("is-pressed"));
+    button.addEventListener("click", (event) => {
+      if (event.detail === 0) move(button.dataset.dir);
+    });
   });
+
+  wireSwipeControls();
+}
+
+function beginPlay() {
+  if (state.mode === "playing" || state.mode === "levelclear") {
+    canvas.focus({ preventScroll: true });
+    return;
+  }
+
+  if (state.credits <= 0) insertCoin(state);
+  if (!startGame(state)) return;
+
+  updateMusic(audio, state);
+  controlStatus.textContent = "Game started";
+  gestureHint.classList.add("is-hidden");
+  vibrate(18);
+  canvas.focus({ preventScroll: true });
+}
+
+function move(direction) {
+  const wasLeaping = state.frog.leaping;
+  requestMove(state, direction);
+  if (!wasLeaping && state.frog.leaping) {
+    controlStatus.textContent = `Moved ${direction}`;
+    vibrate(8);
+  }
+}
+
+function wireSwipeControls() {
+  let start = null;
+
+  canvas.addEventListener("pointerdown", (event) => {
+    if (!event.isPrimary) return;
+    start = { pointerId: event.pointerId, x: event.clientX, y: event.clientY };
+    canvas.setPointerCapture?.(event.pointerId);
+    event.preventDefault();
+  });
+
+  canvas.addEventListener("pointermove", (event) => {
+    if (start?.pointerId === event.pointerId) event.preventDefault();
+  });
+
+  canvas.addEventListener("pointerup", (event) => {
+    if (start?.pointerId !== event.pointerId) return;
+
+    const bounds = canvas.getBoundingClientRect();
+    const threshold = Math.max(20, Math.min(bounds.width, bounds.height) * 0.065);
+    const direction = directionFromSwipe(start, { x: event.clientX, y: event.clientY }, threshold);
+    start = null;
+    canvas.releasePointerCapture?.(event.pointerId);
+
+    if (direction) {
+      gestureHint.classList.add("is-hidden");
+      move(direction);
+    }
+    event.preventDefault();
+  });
+
+  canvas.addEventListener("pointercancel", () => {
+    start = null;
+  });
+  canvas.addEventListener("contextmenu", (event) => event.preventDefault());
+}
+
+function vibrate(duration) {
+  if (typeof navigator.vibrate === "function") navigator.vibrate(duration);
 }
 
 function loop(now) {

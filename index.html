@@ -2,25 +2,50 @@
 <html lang="en">
   <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta http-equiv="Cache-Control" content="no-store">
+    <meta name="theme-color" content="#07110a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Frogger Arcade Clone</title>
-    <link rel="stylesheet" href="src/styles.css?v=20260510-attract-credits">
+    <link rel="stylesheet" href="src/styles.css?v=20260710-mobile">
   </head>
   <body>
-    <main class="shell">
-      <canvas id="game" width="240" height="256" aria-label="Frogger arcade clone game canvas"></canvas>
-      <div class="panel">
-        <button id="coin" type="button">Coin</button>
-        <button id="start" type="button">Start</button>
-        <button id="mute" type="button" aria-pressed="false">Sound</button>
+    <main class="shell" aria-label="Frogger arcade cabinet">
+      <div class="game-stage">
+        <canvas
+          id="game"
+          width="240"
+          height="256"
+          tabindex="0"
+          aria-label="Frogger game. Swipe in a direction to move."
+          aria-describedby="swipe-hint"
+        ></canvas>
+        <p id="swipe-hint" class="gesture-hint" aria-hidden="true">Swipe to hop</p>
       </div>
-      <div class="dpad" aria-label="Movement controls">
-        <button type="button" data-dir="up" aria-label="Move up">^</button>
-        <button type="button" data-dir="left" aria-label="Move left">&lt;</button>
-        <button type="button" data-dir="down" aria-label="Move down">v</button>
-        <button type="button" data-dir="right" aria-label="Move right">&gt;</button>
-      </div>
+
+      <section class="controls" aria-label="Game controls">
+        <div class="panel">
+          <button id="play" class="action-button play-button" type="button">
+            <span class="button-kicker">ONE TAP</span>
+            <span class="button-label">PLAY</span>
+          </button>
+          <button id="mute" class="action-button sound-button" type="button" aria-pressed="false">
+            <span class="button-kicker">AUDIO</span>
+            <span class="button-label" id="sound-label">ON</span>
+          </button>
+        </div>
+
+        <div class="dpad" aria-label="Movement controls">
+          <button type="button" data-dir="up" aria-label="Move up"><span aria-hidden="true">▲</span></button>
+          <button type="button" data-dir="left" aria-label="Move left"><span aria-hidden="true">◀</span></button>
+          <span class="dpad-centre" aria-hidden="true"></span>
+          <button type="button" data-dir="right" aria-label="Move right"><span aria-hidden="true">▶</span></button>
+          <button type="button" data-dir="down" aria-label="Move down"><span aria-hidden="true">▼</span></button>
+        </div>
+      </section>
+
+      <p id="control-status" class="visually-hidden" aria-live="polite"></p>
     </main>
     <script>
       window.addEventListener("error", (event) => {
@@ -35,6 +60,6 @@
         ctx.fillText(String(event.error?.message || event.message || "unknown").slice(0, 36), 8, 130);
       });
     </script>
-    <script type="module" src="src/app.js?v=20260510-attract-credits"></script>
+    <script type="module" src="src/app.js?v=20260710-mobile"></script>
   </body>
 </html>
