@@ -1,5 +1,5 @@
 import { CONTROL_MAP } from "./constants.js?v=20260510-attract-credits";
-import { createAudioController, playSoundEvent, setMuted, updateMusic } from "./audio.js?v=20260510-attract-credits";
+import { createAudioController, playSoundEvent, setMuted, unlockAudio, updateMusic } from "./audio.js?v=20260710-mobile-unlock";
 import { createGame, getFrameData, insertCoin, requestMove, startGame, updateGame } from "./game.js?v=20260510-attract-credits";
 import { directionFromSwipe } from "./input.js?v=20260710-mobile";
 import { createRenderer, render } from "./renderer.js?v=20260510-attract-credits";
@@ -38,10 +38,17 @@ loadSpriteSheet()
 function wireControls() {
   playButton.addEventListener("click", beginPlay);
   muteButton.addEventListener("click", () => {
-    setMuted(audio, !audio.muted);
+    const shouldMute = !audio.muted;
+    setMuted(audio, shouldMute);
     soundLabel.textContent = audio.muted ? "OFF" : "ON";
     muteButton.setAttribute("aria-pressed", String(audio.muted));
     controlStatus.textContent = audio.muted ? "Sound muted" : "Sound on";
+    if (!shouldMute) {
+      void unlockAudio(audio).then((ready) => {
+        controlStatus.textContent = ready ? "Sound on" : "Sound unavailable";
+        if (ready) updateMusic(audio, state);
+      });
+    }
   });
 
   window.addEventListener("keydown", (event) => {
@@ -88,15 +95,28 @@ function wireControls() {
 }
 
 function beginPlay() {
+  const audioReady = unlockAudio(audio);
+
   if (state.mode === "playing" || state.mode === "levelclear") {
+    void audioReady.then(() => updateMusic(audio, state));
     canvas.focus({ preventScroll: true });
     return;
   }
 
-  if (state.credits <= 0) insertCoin(state);
+  const insertedCoin = state.credits <= 0;
+  if (insertedCoin) insertCoin(state);
   if (!startGame(state)) return;
 
+  if (insertedCoin) playSoundEvent(audio, { type: "coin" });
   updateMusic(audio, state);
+  void audioReady.then((ready) => {
+    if (!ready) {
+      controlStatus.textContent = "Game started; sound unavailable";
+      return;
+    }
+    updateMusic(audio, state);
+    controlStatus.textContent = "Game started with sound";
+  });
   controlStatus.textContent = "Game started";
   gestureHint.classList.add("is-hidden");
   vibrate(18);

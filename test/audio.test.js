@@ -2,13 +2,83 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 const {
+  createAudioController,
   midiToFrequency,
   musicModeForState,
   musicPatternForMode,
   musicStepDurationForMode,
+  playSoundEvent,
+  unlockAudio,
+  updateMusic,
   soundDurationForEvent,
   soundNoteForEvent
 } = await import("../src/audio.js");
+
+class FakeAudioContext {
+  constructor() {
+    this.currentTime = 0;
+    this.destination = {};
+    this.state = "suspended";
+    this.resumeCalls = 0;
+    this.startedOscillators = 0;
+  }
+
+  createOscillator() {
+    return {
+      frequency: { setValueAtTime() {} },
+      connect() {},
+      start: () => { this.startedOscillators += 1; },
+      stop() {}
+    };
+  }
+
+  createGain() {
+    return {
+      gain: {
+        setValueAtTime() {},
+        exponentialRampToValueAtTime() {}
+      },
+      connect() {}
+    };
+  }
+
+  resume() {
+    this.resumeCalls += 1;
+    this.state = "running";
+    return Promise.resolve();
+  }
+}
+
+test("music does not create an audio context before user interaction", () => {
+  const audio = createAudioController();
+  updateMusic(audio, { mode: "attract" });
+  assert.equal(audio.context, null);
+});
+
+test("audio unlock creates, primes, and resumes the context during a user gesture", async () => {
+  const originalWindow = globalThis.window;
+  globalThis.window = { AudioContext: FakeAudioContext };
+
+  try {
+    const audio = createAudioController();
+    assert.equal(await unlockAudio(audio), true);
+    assert.equal(audio.context.state, "running");
+    assert.equal(audio.context.resumeCalls, 1);
+    assert.equal(audio.context.startedOscillators, 1);
+  } finally {
+    globalThis.window = originalWindow;
+  }
+});
+
+test("sound can be scheduled while a created context is finishing its resume", () => {
+  const audio = createAudioController();
+  audio.context = new FakeAudioContext();
+
+  playSoundEvent(audio, { type: "coin" });
+
+  assert.equal(audio.context.state, "suspended");
+  assert.equal(audio.context.startedOscillators, 3);
+});
 
 test("leap sound alternates between low and high tutorial notes", () => {
   assert.equal(soundNoteForEvent({ type: "leap", step: 1 }), 61);

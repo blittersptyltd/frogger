@@ -16,6 +16,23 @@ export function setMuted(audio, muted) {
   stopMusic(audio);
 }
 
+export function unlockAudio(audio) {
+  if (audio.muted) return Promise.resolve(false);
+
+  const AudioContext = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContext) return Promise.resolve(false);
+  if (!audio.context || audio.context.state === "closed") audio.context = new AudioContext();
+
+  primeContext(audio.context);
+
+  if (audio.context.state === "running") return Promise.resolve(true);
+  if (typeof audio.context.resume !== "function") return Promise.resolve(false);
+
+  return Promise.resolve(audio.context.resume())
+    .then(() => audio.context?.state === "running")
+    .catch(() => false);
+}
+
 export function playSoundEvent(audio, event) {
   if (!event || audio.muted) {
     stopSfx(audio);
@@ -143,6 +160,18 @@ function stopNodes(nodes) {
   });
 }
 
+function primeContext(context) {
+  const oscillator = context.createOscillator();
+  const gain = context.createGain();
+  const now = context.currentTime;
+  oscillator.frequency.setValueAtTime(440, now);
+  gain.gain.setValueAtTime(0.0001, now);
+  oscillator.connect(gain);
+  gain.connect(context.destination);
+  oscillator.start(now);
+  oscillator.stop(now + 0.01);
+}
+
 export function midiToFrequency(note) {
   return 440 * 2 ** ((note - 69) / 12);
 }
@@ -175,11 +204,5 @@ export function musicStepDurationForMode(mode) {
 }
 
 function ensureContext(audio) {
-  const AudioContext = window.AudioContext || window.webkitAudioContext;
-  if (!AudioContext) return false;
-  if (!audio.context) audio.context = new AudioContext();
-  if (audio.context.state === "suspended" && typeof audio.context.resume === "function") {
-    audio.context.resume();
-  }
-  return true;
+  return Boolean(audio.context && audio.context.state !== "closed");
 }
